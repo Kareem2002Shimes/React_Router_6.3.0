@@ -1,52 +1,50 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import PokemonList from "./components/Pokemon App/PokemonList";
-import Pagination from "./components/Pokemon App/Pagination";
+import React from "react";
+import { AuthProvider } from "./components/auth";
+import { Route, Routes } from "react-router-dom"; // Routes , Route
+import { Home } from "./components/Home";
+import { NavigationBar } from "./components/NavigationBar";
+import { NextPage } from "./components/NextPage";
+import { NotMatch } from "./components/NotMatch";
+import { Products } from "./components/Products";
+import { FeaturedProducts } from "./components/FeaturedProducts";
+import { NewProducts } from "./components/NewProducts";
+import { Users } from "./components/Users";
+import { UserDetails } from "./components/UserDetails";
+import { Admin } from "./components/Admin";
+import { Profile } from "./components/Profile";
+import Login from "./components/Login";
+import "./App.css";
 
+const LazyAbout = React.lazy(() => import("./components/About"));
 function App() {
-  const [pokemon, setPokemon] = useState([]);
-  const [currentPageUrl, setCurrentPageUrl] = useState(
-    "https://pokeapi.co/api/v2/pokemon"
-  );
-  const [nextPageUrl, setNextPageUrl] = useState();
-  const [prevPageUrl, setPrevPageUrl] = useState();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancel;
-    setLoading(true);
-    axios
-      .get(currentPageUrl, {
-        cancelToken: new axios.CancelToken((c) => (cancel = c)),
-      })
-      .then((response) => {
-        setLoading(false);
-        setNextPageUrl(response.data.next);
-        setPrevPageUrl(response.data.previous);
-        setPokemon(response.data.results.map((p) => p.name));
-      })
-      .catch((error) => console.log(error));
-
-    return () => cancel();
-  }, [currentPageUrl]);
-
-  if (loading) return "Loading...";
-
-  function goToNextPage() {
-    setCurrentPageUrl(nextPageUrl);
-  }
-  function goToPrevPage() {
-    setCurrentPageUrl(prevPageUrl);
-  }
-
   return (
-    <React.Fragment>
-      <PokemonList pokemon={pokemon} />
-      <Pagination
-        goToNextPage={nextPageUrl ? goToNextPage : null}
-        goToPrevPage={prevPageUrl ? goToPrevPage : null}
-      />
-    </React.Fragment>
+    <AuthProvider>
+      <NavigationBar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="about"
+          element={
+            <React.Suspense fallback="Loading...">
+              <LazyAbout />
+            </React.Suspense>
+          }
+        />
+        <Route path="nextPage" element={<NextPage />} />
+        <Route path="products" element={<Products />}>
+          <Route index element={<FeaturedProducts />} />
+          <Route path="features" element={<FeaturedProducts />} />
+          <Route path="new" element={<NewProducts />} />
+        </Route>
+        <Route path="users" element={<Users />}>
+          <Route path=":userId" element={<UserDetails />} />
+          <Route path="admin" element={<Admin />} />
+        </Route>
+        <Route path="profile" element={<Profile />} />
+        <Route path="login" element={<Login />} />
+        <Route path="*" element={<NotMatch />} />
+      </Routes>
+    </AuthProvider>
   );
 }
 
